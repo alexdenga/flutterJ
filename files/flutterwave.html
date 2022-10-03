@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ade Flutterwave</title>
+  </head>
+  <body>
+    <h2 style="text-align:center;">Making payment, please wait</h2>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <script>
+      function test(params) {
+        let d = document.querySelector("h2");
+        d.innerHTML = `Making payment for ${params}, <br>please wait...`;
+      }
+
+      function sendBack(data) {
+        messageHandler.postMessage(data);
+      }
+
+      function closeWebView(){
+        //close the tab
+        window.stop();
+        var data = {
+            "status" : "cancelled",
+        };
+        //stringify
+        var dataString = JSON.stringify(data);
+        messageHandler.postMessage(dataString);
+      }
+
+      function makePayment(tx_ref, amount, email, title, name, currency, icon, public_key, phone) {
+        test(title);
+
+        var opt = "mpesa,card";
+        if (currency == "ZMW") {
+          opt = "mobilemoneyzambia,card";
+        }
+
+        FlutterwaveCheckout({
+          public_key: public_key,
+          tx_ref: tx_ref,
+          amount: amount,
+          currency: currency,
+          payment_options: opt,
+          // specified redirect URL
+          //   redirect_url:
+          //     "https://callbacks.piedpiper.com/flutterwave.aspx?ismobile=34",
+          customer: {
+            email: email,
+            phone_number: phone,
+            name: name
+          },
+          callback: function (data) {
+            console.log(data);
+            let dd = JSON.stringify(data);
+            // console.log(dd);
+             window.stop();
+            sendBack(dd);
+          },
+          onclose: function () {
+            // close modal
+            closeWebView();
+          },
+          customizations: {
+            title: title,
+            description: "Payment for items in cart",
+            logo: icon
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
