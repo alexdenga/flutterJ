@@ -1,14 +1,14 @@
-# comment_box
+# ade_flutterwave_working_version
 
 A simple Flutterwave payment that works.
 
 ## Youtube Preview
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/IphfMcZc3jc/0.jpg)](https://www.youtube.com/watch?v=IphfMcZc3jc)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/uOvP3rwnVwQ/0.jpg)](https://www.youtube.com/watch?v=uOvP3rwnVwQ)
 
 [![Pub](https://img.shields.io/pub/v/flutter_slidable.svg)](https://pub.dev/packages/ade_flutterwave_working_version)
 
-![Overview](https://github.com/adeleyeayodeji/comment_box/blob/main/screenshot1.png)
+![Overview](https://github.com/adeleyeayodeji/ade_flutterwave_working_version/blob/main/screenshot1.png)
 
 ## Features
 
@@ -24,7 +24,7 @@ In the `pubspec.yaml` of your flutter project, add the following dependency:
 ```yaml
 dependencies:
   ...
-  ade_flutterwave_working_version: ^0.0.1+1
+  ade_flutterwave_working_version: ^0.0.1+3
 ```
 
 In your library add the following import:
