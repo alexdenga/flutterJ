@@ -69,6 +69,7 @@ class _AdeFlutterExampleState extends State<AdeFlutterExample> {
                       'email': _emailController.text,
                       'phone': _phoneController.text,
                       'name': _fullNameController.text,
+                      'payment_options': 'card, banktransfer, ussd',
                       'title': 'Flutterwave payment',
                       'currency': "NGN",
                       'tx_ref':

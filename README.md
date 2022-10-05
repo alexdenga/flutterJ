@@ -8,6 +8,8 @@ A simple Flutterwave payment that works.
 
 [![Pub](https://img.shields.io/pub/v/flutter_slidable.svg)](https://pub.dev/packages/ade_flutterwave_working_version)
 
+![Overview](https://github.com/adeleyeayodeji/ade_flutterwave_working_version/blob/main/screenshot2.png)
+
 ![Overview](https://github.com/adeleyeayodeji/ade_flutterwave_working_version/blob/main/screenshot1.png)
 
 ## Features
@@ -24,7 +26,7 @@ In the `pubspec.yaml` of your flutter project, add the following dependency:
 ```yaml
 dependencies:
   ...
-  ade_flutterwave_working_version: ^0.0.1+3
+  ade_flutterwave_working_version: ^0.0.2+1
 ```
 
 In your library add the following import:
@@ -45,6 +47,7 @@ You can create a `AdeFlutterWavePay`:
         'email': _emailController.text,
         'phone': _phoneController.text,
         'name': _fullNameController.text,
+        'payment_options': 'card, banktransfer, ussd',
         'title': 'Flutterwave payment',
         'currency': "NGN",
         'tx_ref':
@@ -142,6 +145,7 @@ class _AdeFlutterExampleState extends State<AdeFlutterExample> {
                       'email': _emailController.text,
                       'phone': _phoneController.text,
                       'name': _fullNameController.text,
+                      'payment_options': 'card, banktransfer, ussd',
                       'title': 'Flutterwave payment',
                       'currency': "NGN",
                       'tx_ref':

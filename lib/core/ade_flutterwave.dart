@@ -29,7 +29,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
   loadfunction() {
     Timer(const Duration(seconds: 5), () {
       _webViewController.evaluateJavascript(
-          'makePayment("${data["tx_ref"]}", "${data["amount"]}", "${data["email"]}", "${data["title"]}", "${data["name"]}", "${data["currency"]}", "${data["icon"]}", "${data["public_key"]}", "${data["phone"]}")');
+          'makePayment("${data["tx_ref"]}", "${data["amount"]}", "${data["email"]}", "${data["title"]}", "${data["name"]}", "${data["currency"]}", "${data["icon"]}", "${data["public_key"]}", "${data["phone"]}", "${data["payment_options"]}")');
       setState(() {
         isGeneratingCode = false;
       });
@@ -53,7 +53,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
           child: const Icon(Icons.refresh_sharp),
           onPressed: () {
             _webViewController.evaluateJavascript(
-                'makePayment("${data["tx_ref"]}", "${data["amount"]}", "${data["email"]}", "${data["title"]}", "${data["name"]}", "${data["currency"]}", "${data["icon"]}", "${data["public_key"]}", "${data["phone"]}")');
+                'makePayment("${data["tx_ref"]}", "${data["amount"]}", "${data["email"]}", "${data["title"]}", "${data["name"]}", "${data["currency"]}", "${data["icon"]}", "${data["public_key"]}", "${data["phone"]}", "${data["payment_options"]}")');
           },
         ),
         appBar: AppBar(
@@ -175,18 +175,109 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
           ]),
           onWebViewCreated: (WebViewController webViewController) async {
             _webViewController = webViewController;
-            _loadhtmlFromAssets();
+            _loadhtmlFromString();
           },
         ),
       ),
     );
   }
 
-  _loadhtmlFromAssets() async {
-    String filehtml = await rootBundle.loadString(filepath);
-    _webViewController.loadUrl(Uri.dataFromString(filehtml,
+  // _loadhtmlFromAssets() async {
+  //   String filehtml = await rootBundle.loadString(filepath);
+  //   _webViewController.loadUrl(Uri.dataFromString(filehtml,
+  //           mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
+  //       .toString());
+  //   //flutter snackbars
+  //   _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+  //     content: Text("Loading..."),
+  //     duration: Duration(seconds: 5),
+  //   ));
+  //   //delay for 5 seconds
+  //   Future.delayed(const Duration(seconds: 5), () {
+  //     loadfunction();
+  //   });
+  // }
+
+  htmlString() {
+    return '''
+    <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ade Flutterwave</title>
+  </head>
+  <body>
+    <h2 style="text-align:center;">Making payment, please wait</h2>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <script>
+      function test(params) {
+        let d = document.querySelector("h2");
+        d.innerHTML = 'Making payment for'+ params + ', <br>please wait...';
+      }
+
+      function sendBack(data) {
+        messageHandler.postMessage(data);
+      }
+
+      function closeWebView(){
+        //close the tab
+        window.stop();
+        var data = {
+            "status" : "cancelled",
+        };
+        //stringify
+        var dataString = JSON.stringify(data);
+        messageHandler.postMessage(dataString);
+      }
+
+      function makePayment(tx_ref, amount, email, title, name, currency, icon, public_key, phone, payment_options) {
+        test(title);
+
+        FlutterwaveCheckout({
+          public_key: public_key,
+          tx_ref: tx_ref,
+          amount: amount,
+          currency: currency,
+          payment_options: payment_options,
+          // specified redirect URL
+          //   redirect_url:
+          //     "https://callbacks.piedpiper.com/flutterwave.aspx?ismobile=34",
+          customer: {
+            email: email,
+            phone_number: phone,
+            name: name
+          },
+          callback: function (data) {
+            console.log(data);
+            let dd = JSON.stringify(data);
+            // console.log(dd);
+             window.stop();
+            sendBack(dd);
+          },
+          onclose: function () {
+            // close modal
+            closeWebView();
+          },
+          customizations: {
+            title: title,
+            description: "Payment for items in cart",
+            logo: icon
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
+    ''';
+  }
+
+  _loadhtmlFromString() async {
+    _webViewController.loadUrl(Uri.dataFromString(htmlString(),
             mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
         .toString());
+
     //flutter snackbars
     _scaffoldKey.currentState?.showSnackBar(const SnackBar(
       content: Text("Loading..."),

@@ -1,3 +1,11 @@
+## 0.0.2+1
+
+- Added payment options
+
+## 0.0.1+4
+
+- Moved html from assets to string format
+
 ## 0.0.1+3
 
 - Updated Readme
