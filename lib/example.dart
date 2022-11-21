@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:ade_flutterwave_working_version/core/ade_flutterwave.dart';
 
 class AdeFlutterExample extends StatefulWidget {
@@ -64,6 +62,19 @@ class _AdeFlutterExampleState extends State<AdeFlutterExample> {
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    //check if the fields are empty
+                    if (_amountController.text.isEmpty ||
+                        _emailController.text.isEmpty ||
+                        _phoneController.text.isEmpty ||
+                        _fullNameController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please fill all the fields'),
+                        ),
+                      );
+                      return;
+                    }
+                    //data
                     var data = {
                       'amount': _amountController.text,
                       'email': _emailController.text,
@@ -89,7 +100,7 @@ class _AdeFlutterExampleState extends State<AdeFlutterExample> {
                       ),
                     ).then((response) {
                       //response is the response from the payment
-                      print(response);
+                      // print(response);
                     });
                   },
                   child: const Text('Pay'),

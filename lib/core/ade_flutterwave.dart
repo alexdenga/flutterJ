@@ -1,23 +1,21 @@
-// ignore_for_file: prefer_collection_literals, avoid_print, use_build_context_synchronously
+// ignore_for_file: prefer_collection_literals, avoid_print, use_build_context_synchronously, library_private_types_in_public_api, no_logic_in_create_state, prefer_typing_uninitialized_variables, avoid_init_to_null
 
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
 
 class AdeFlutterWavePay extends StatefulWidget {
   final data;
-  AdeFlutterWavePay(this.data);
+  const AdeFlutterWavePay(this.data, {super.key});
 
   @override
-  _AdeFlutterWavePayState createState() => _AdeFlutterWavePayState(this.data);
+  _AdeFlutterWavePayState createState() => _AdeFlutterWavePayState(data);
 }
 
 class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   _AdeFlutterWavePayState(this.data);
   String filepath = "files/flutterwave.html";
   late WebViewController _webViewController;
@@ -28,7 +26,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
 
   loadfunction() {
     Timer(const Duration(seconds: 5), () {
-      _webViewController.evaluateJavascript(
+      _webViewController.runJavascriptReturningResult(
           'makePayment("${data["tx_ref"]}", "${data["amount"]}", "${data["email"]}", "${data["title"]}", "${data["name"]}", "${data["currency"]}", "${data["icon"]}", "${data["public_key"]}", "${data["phone"]}", "${data["payment_options"]}")');
       setState(() {
         isGeneratingCode = false;
@@ -48,11 +46,10 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
       opacity: 1,
       color: Colors.black54,
       child: Scaffold(
-        key: _scaffoldKey,
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.refresh_sharp),
           onPressed: () {
-            _webViewController.evaluateJavascript(
+            _webViewController.runJavascriptReturningResult(
                 'makePayment("${data["tx_ref"]}", "${data["amount"]}", "${data["email"]}", "${data["title"]}", "${data["name"]}", "${data["currency"]}", "${data["icon"]}", "${data["public_key"]}", "${data["phone"]}", "${data["payment_options"]}")');
           },
         ),
@@ -70,7 +67,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
                   // });
                 });
               } catch (e) {
-                _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text(
                     "Something went wrong!",
                     style: TextStyle(color: Colors.white),
@@ -94,7 +91,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
                   _webViewController.clearCache();
                   var response = jsonDecode(d);
                   if (response["status"] != "cancelled") {
-                    _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text("Verifying transactions, please wait.."),
                       duration: Duration(seconds: 5),
                     ));
@@ -116,7 +113,8 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
                       _webViewController.clearCache();
                       // print(d2);
                       if (d2["status"] == "success") {
-                        _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
                           content: Text(
                             "Transaction verified!, redirecting...",
                             style: TextStyle(color: Colors.white),
@@ -139,7 +137,8 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
                           }
                         });
                       } else {
-                        _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
                           content: Text(
                             "Transaction failed!",
                             style: TextStyle(color: Colors.white),
@@ -152,7 +151,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
                         });
                       }
                     } catch (e) {
-                      _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text(
                           "Something went wrong!",
                           style: TextStyle(color: Colors.white),
@@ -162,7 +161,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
                       ));
                     }
                   } else {
-                    _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text(
                         "Transaction cancelled!",
                         style: TextStyle(color: Colors.white),
@@ -188,7 +187,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
   //           mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
   //       .toString());
   //   //flutter snackbars
-  //   _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+  //   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
   //     content: Text("Loading..."),
   //     duration: Duration(seconds: 5),
   //   ));
@@ -279,7 +278,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
         .toString());
 
     //flutter snackbars
-    _scaffoldKey.currentState?.showSnackBar(const SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text("Loading..."),
       duration: Duration(seconds: 5),
     ));
