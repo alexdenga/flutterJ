@@ -1,3 +1,7 @@
+## 0.0.2+2
+
+- Fix bugs in the package
+
 ## 0.0.2+1
 
 - Added payment options

@@ -26,7 +26,7 @@ In the `pubspec.yaml` of your flutter project, add the following dependency:
 ```yaml
 dependencies:
   ...
-  ade_flutterwave_working_version: ^0.0.2+1
+  ade_flutterwave_working_version: ^0.0.2+2
 ```
 
 In your library add the following import:
@@ -42,41 +42,52 @@ For help getting started with Flutter, view the online [documentation](https://f
 You can create a `AdeFlutterWavePay`:
 
 ```dart
- var data = {
-        'amount': _amountController.text,
-        'email': _emailController.text,
-        'phone': _phoneController.text,
-        'name': _fullNameController.text,
-        'payment_options': 'card, banktransfer, ussd',
-        'title': 'Flutterwave payment',
-        'currency': "NGN",
-        'tx_ref':
-            "AdeFlutterwave-${DateTime.now().millisecondsSinceEpoch}",
-        'icon':
-            "https://www.aqskill.com/wp-content/uploads/2020/05/logo-pde.png",
-        'public_key':
-            "FLWPUBK_TEST-your-key",
-        'sk_key':
-            'FLWSECK_TEST-your-key'
+  //check if the fields are empty
+ if (_amountController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
+        _fullNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all the fields'),
+        ),
+      );
+      return;
+    }
+    //data
+    var data = {
+      'amount': _amountController.text,
+      'email': _emailController.text,
+      'phone': _phoneController.text,
+      'name': _fullNameController.text,
+      'payment_options': 'card, banktransfer, ussd',
+      'title': 'Flutterwave payment',
+      'currency': "NGN",
+      'tx_ref':
+          "AdeFlutterwave-${DateTime.now().millisecondsSinceEpoch}",
+      'icon':
+          "https://www.aqskill.com/wp-content/uploads/2020/05/logo-pde.png",
+      'public_key':
+          "FLWPUBK_TEST-e0787ab2e5b0b6fcb3d32ce465ad44d0-X",
+      'sk_key':
+          'FLWSECK_TEST-af1af523da3f141f894a26be4b071230-X'
     };
 
     Navigator.push(
-        context,
-        MaterialPageRoute(
+      context,
+      MaterialPageRoute(
         builder: (context) => AdeFlutterWavePay(data),
-        ),
+      ),
     ).then((response) {
-        //response is the response from the payment
-        print(response);
-    });
+      //response is the response from the payment
+      // print(response);
+  });
 ```
 
 ### Full Example
 
 ```Dart
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:ade_flutterwave_working_version/core/ade_flutterwave.dart';
 
 class AdeFlutterExample extends StatefulWidget {
@@ -140,6 +151,19 @@ class _AdeFlutterExampleState extends State<AdeFlutterExample> {
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    //check if the fields are empty
+                    if (_amountController.text.isEmpty ||
+                        _emailController.text.isEmpty ||
+                        _phoneController.text.isEmpty ||
+                        _fullNameController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please fill all the fields'),
+                        ),
+                      );
+                      return;
+                    }
+                    //data
                     var data = {
                       'amount': _amountController.text,
                       'email': _emailController.text,
@@ -165,7 +189,7 @@ class _AdeFlutterExampleState extends State<AdeFlutterExample> {
                       ),
                     ).then((response) {
                       //response is the response from the payment
-                      print(response);
+                      // print(response);
                     });
                   },
                   child: const Text('Pay'),
@@ -176,4 +200,5 @@ class _AdeFlutterExampleState extends State<AdeFlutterExample> {
         ));
   }
 }
+
 ```
