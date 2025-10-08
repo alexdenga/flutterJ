@@ -6,47 +6,77 @@ import 'package:flutter/material.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
-class AdeFlutterWavePay extends StatefulWidget {
+class FlutterWavePay extends StatefulWidget {
   final Map<String, dynamic> data;
 
-  const AdeFlutterWavePay(this.data, {super.key});
+  const FlutterWavePay(this.data, {super.key});
 
   @override
-  _AdeFlutterWavePayState createState() => _AdeFlutterWavePayState();
+  _FlutterWavePayState createState() => _FlutterWavePayState();
 }
 
-class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
-  late WebViewController _webViewController;
+class _FlutterWavePayState extends State<FlutterWavePay> {
+  late final WebViewController _webViewController;
   bool isGeneratingCode = true;
   dynamic result;
 
   @override
   void initState() {
     super.initState();
-    // Optional for Android 12+ (uncomment if WebView fails to render)
-    // WebView.platform = SurfaceAndroidWebView();
-  }
+    // Configure WebViewController (webview_flutter 4.x)
+    const PlatformWebViewControllerCreationParams params =
+        PlatformWebViewControllerCreationParams();
 
-  void _loadPaymentScript() {
-    if (mounted) {
-      Timer(const Duration(seconds: 3), () async {
-        if (!mounted) return;
+    final WebViewController controller =
+        WebViewController.fromPlatformCreationParams(params);
+
+    if (controller.platform is AndroidWebViewController) {
+      AndroidWebViewController.enableDebugging(true);
+      (controller.platform as AndroidWebViewController)
+          .setMediaPlaybackRequiresUserGesture(false);
+    }
+
+    controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+
+    controller.setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (url) {
+          if (!mounted) return;
+          _showSnack("Payment page ready...");
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (mounted) _runPaymentScript();
+          });
+        },
+      ),
+    );
+
+    controller.addJavaScriptChannel(
+      'messageHandler',
+      onMessageReceived: (JavaScriptMessage message) async {
         try {
-          await _webViewController.runJavascriptReturningResult(
-            'makePayment("${widget.data["tx_ref"]}", "${widget.data["amount"]}", "${widget.data["email"]}", "${widget.data["title"]}", "${widget.data["name"]}", "${widget.data["currency"]}", "${widget.data["icon"]}", "${widget.data["public_key"]}", "${widget.data["phone"]}", "${widget.data["payment_options"]}")',
-          );
-          if (mounted) {
-            setState(() => isGeneratingCode = false);
+          final response = jsonDecode(message.message);
+          if (response["status"] == "cancelled") {
+            _showSnack("Transaction cancelled", color: Colors.red);
+          } else {
+            _showSnack("Verifying transaction...");
+            setState(() => isGeneratingCode = true);
+            await _verifyTransaction("${response["transaction_id"]}");
           }
         } catch (e) {
-          print("Error running JS: $e");
+          print("Decode error: $e");
+          _showSnack("Invalid response from payment", color: Colors.red);
         }
-      });
-    }
+      },
+    );
+
+    _webViewController = controller;
+    _loadHtmlToWebView();
   }
 
-  void _showSnack(String text, {Color color = Colors.orange, int seconds = 4}) {
+  /// Show short snack messages
+  void _showSnack(String text, {Color color = Colors.orange, int seconds = 3}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -57,6 +87,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
     );
   }
 
+  /// Verify transaction from Flutterwave API
   Future<void> _verifyTransaction(String id) async {
     try {
       final response = await http.get(
@@ -69,26 +100,24 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
       );
 
       final body = jsonDecode(response.body);
-
       if (body["status"] == "success") {
-        _showSnack("Transaction verified! Redirecting...",
-            color: Colors.green, seconds: 3);
+        _showSnack("Transaction verified!", color: Colors.green, seconds: 2);
         result = body;
-
-        Future.delayed(const Duration(seconds: 3), () {
+        Future.delayed(const Duration(seconds: 2), () {
           if (mounted) Navigator.pop(context, body);
         });
       } else {
-        _showSnack("Transaction failed!", color: Colors.red);
+        _showSnack("Verification failed!", color: Colors.red);
       }
     } catch (e) {
-      _showSnack("Error verifying transaction!", color: Colors.red);
       print("Verify error: $e");
+      _showSnack("Error verifying transaction", color: Colors.red);
     } finally {
       if (mounted) setState(() => isGeneratingCode = false);
     }
   }
 
+  /// HTML page for Flutterwave checkout
   String _htmlContent() => '''
     <!DOCTYPE html>
     <html lang="en">
@@ -132,7 +161,7 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
               },
               customizations: {
                 title: title,
-                description: "Payment for items in cart",
+                description: "Payment for your order",
                 logo: icon
               }
             });
@@ -142,23 +171,34 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
     </html>
   ''';
 
+  /// Load HTML and set up navigation listener
   Future<void> _loadHtmlToWebView() async {
-    final html = Uri.dataFromString(
+    final htmlUri = Uri.dataFromString(
       _htmlContent(),
       mimeType: 'text/html',
       encoding: Encoding.getByName('utf-8'),
-    ).toString();
+    );
 
-    await _webViewController.loadUrl(html);
-    _showSnack("Loading payment page...");
-    _loadPaymentScript();
+    await _webViewController.loadRequest(htmlUri);
+  }
+
+  /// Runs the Flutterwave JS function once HTML is loaded
+  Future<void> _runPaymentScript() async {
+    try {
+      await _webViewController.runJavaScriptReturningResult(
+        'makePayment("${widget.data["tx_ref"]}", "${widget.data["amount"]}", "${widget.data["email"]}", "${widget.data["title"]}", "${widget.data["name"]}", "${widget.data["currency"]}", "${widget.data["icon"]}", "${widget.data["public_key"]}", "${widget.data["phone"]}", "${widget.data["payment_options"]}")',
+      );
+      if (mounted) setState(() => isGeneratingCode = false);
+    } catch (e) {
+      print("Error running JS: $e");
+      _showSnack("Failed to start payment", color: Colors.red);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return LoadingOverlay(
       isLoading: isGeneratingCode,
-      opacity: 0.7,
       color: Colors.black54,
       child: Scaffold(
         appBar: AppBar(
@@ -171,39 +211,10 @@ class _AdeFlutterWavePayState extends State<AdeFlutterWavePay> {
           ),
         ),
         floatingActionButton: FloatingActionButton(
+          onPressed: _runPaymentScript,
           child: const Icon(Icons.refresh),
-          onPressed: () => _loadPaymentScript(),
         ),
-        body: WebView(
-          initialUrl: '',
-          javascriptMode: JavascriptMode.unrestricted,
-          onWebViewCreated: (controller) async {
-            _webViewController = controller;
-            await _loadHtmlToWebView();
-          },
-          javascriptChannels: {
-            JavascriptChannel(
-              name: "messageHandler",
-              onMessageReceived: (message) async {
-                final msg = message.message;
-                try {
-                  final response = jsonDecode(msg);
-                  if (response["status"] == "cancelled") {
-                    _showSnack("Transaction cancelled.", color: Colors.red);
-                  } else {
-                    _showSnack("Verifying transaction, please wait...");
-                    setState(() => isGeneratingCode = true);
-                    await _verifyTransaction("${response["transaction_id"]}");
-                  }
-                } catch (e) {
-                  print("Message decode error: $e");
-                  _showSnack("Invalid response from payment",
-                      color: Colors.red);
-                }
-              },
-            ),
-          },
-        ),
+        body: WebViewWidget(controller: _webViewController),
       ),
     );
   }
